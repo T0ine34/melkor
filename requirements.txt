@@ -1,0 +1,2 @@
+feanor==1.0.8
+gamuLogger==2.0.6
