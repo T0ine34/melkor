@@ -4,6 +4,13 @@ import os
 
 from gamuLogger import Logger
 
+try:
+    from .customTypes import Suite, Test, TestList
+    from .settings import Settings
+except ImportError:
+    from customTypes import Suite, Test, TestList
+    from settings import Settings
+
 Logger.setModule("melkor")
 
 def importFile(file) -> object:
@@ -11,7 +18,6 @@ def importFile(file) -> object:
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
-
 
 def importFiles(files : List[str]) -> List[object]:
     result = []
@@ -23,12 +29,8 @@ def importFiles(files : List[str]) -> List[object]:
     return result
 
 
-def runTests(testList : List[Callable[[], int]]) -> Dict[str, int]:
-    result = {
-        'totalTests': len(testList),
-        'failedTests': 0,
-        'failed': False
-    }
+def runTests(testList : List[Callable[[], int]]) -> TestList:
+    result = TestList(Settings.get("name"))
     
     for test in testList:
         data = test()

@@ -1,5 +1,6 @@
 import builtins
 import traceback
+import time
 
 
 class CapturePrint:
@@ -25,3 +26,21 @@ def formatTraceback(exception: Exception) -> str:
     trace =  traceback.TracebackException.from_exception(exception)
     trace.stack.pop(0)
     return "    ".join(trace.format())
+
+
+class Chrono:
+    def __init__(self):
+        self.__start = None
+        self.__end = None
+    
+    def __enter__(self):
+        self.__start = time.time()
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.__end = time.time()
+        
+    def get(self):
+        if self.__end is None: # Get the value of the chrono, without stopping it
+            return time.time() - self.__start
+        return self.__end - self.__start

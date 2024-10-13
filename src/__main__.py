@@ -6,11 +6,13 @@ import os
 from gamuLogger import Logger, LEVELS
 
 try:
-    from .tester import Tests
     from .settings import Settings
+    from .engine import importFiles, runTests
+    from .customTypes import TestList, Test, Suite
 except ImportError:
-    from tester import Tests
     from settings import Settings
+    from engine import importFiles, runTests
+    from customTypes import TestList, Test, Suite
     
 
 Logger.setModule("melkor")
@@ -27,30 +29,18 @@ def main():
     
     Settings.setFilePath(args.configFile)
         
+    testDir = Settings().get("testDir")
+    if not os.path.exists(testDir):
+        Logger.error(f"Test directory '{testDir}' not found")
+        sys.exit(1)
+
+    TestList.new(Settings().get("name"))
+
+    files = [os.path.join(testDir, file) for file in os.listdir(testDir) if file.endswith(".py")]
+    modules = importFiles(files)
     
-
-
-    totalTests = 0
-    failedTests = 0
-    globalfailed = False
-
-    
-    for testList in [Tests.UNIT, Tests.INTEGRATION, Tests.END_TO_END]:
-        listName = "Unit" if testList == Tests.UNIT else "Integration" if testList == Tests.INTEGRATION else "End-to-end"
-        if len(testList) == 0:
-            continue
-        elif globalfailed:
-            Logger.info(f"Skipping {len(testList)} {listName} tests because of previous failures")
-            continue
-        
-        Logger.info(f"Running {len(testList)} {listName} tests")
-        result = runTests(testList)
-        totalTests += result['totalTests']
-        failedTests += result['failedTests']
-        globalfailed = globalfailed or result['failed']
-
-    
-    Logger.info(f"Tests run: {totalTests}, failed: {failedTests}")
+    TestList.getInstance().run()
+    Logger.info(str(TestList.getInstance()))
         
 
 if __name__ == "__main__":

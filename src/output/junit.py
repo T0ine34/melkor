@@ -2,14 +2,14 @@ import xml.etree.ElementTree as ET
 
 
 try:
-    from ..customTypes import Suite, Test, TestResults
+    from ..customTypes import Suite, Test, TestList
 except:
-    from customTypes import Suite, Test, TestResults
+    from customTypes import Suite, Test, TestList
 
 
 class Report:
-    def __init__(self, testResults: TestResults):
-        self.__testResults = testResults
+    def __init__(self, TestList: TestList):
+        self.__TestList = TestList
     
     def __generateTestElement(self, test: Test) -> ET.Element:
         element = ET.Element("testcase", {
@@ -52,7 +52,7 @@ class Report:
     
     def generate(self) -> str:
         root = ET.Element("testsuites")
-        root.append(self.__generateSuiteElement(self.__testResults))
+        root.append(self.__generateSuiteElement(self.__TestList))
         
         return ET.tostring(root, encoding="unicode")
     

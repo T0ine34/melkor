@@ -1,24 +1,42 @@
 import datetime
+from typing import Callable, Dict, Any, Union
+
+try:
+    from .utils import Chrono
+except ImportError:
+    from utils import Chrono
 
 
 class Test:
-    def __init__(self, name : str, failed : bool = False, error : bool = False, skipped : bool = False, time : float = 0.0):
-        self.__name = name
-        self.__failed = failed
-        self.__error = error
-        self.__skipped = skipped
-        self.__time = time
+    def __init__(self, func : Callable[[], Dict[str, Any]], parent : Union['TestList', 'Suite'] = None):
+        self.__func = func
+        self.__name = func.__annotations__["name"]
+        self.__failed = False
+        self.__error = False
+        self.__skipped = False
+        self.__time = 0.0
         self.__message = ""
+        self.__traceback = None
+        self.__output = None
+        self.__parent = parent
         
-    def setFailed(self, message : str):
-        self.__failed = True
-        self.__message = message
+    def run(self):
+        if self.__skipped:
+            return # Do not run the test if it was marked as skipped
+        chrono = Chrono()
+        with chrono:
+            data = self.__func() # contains keys: hasSucceeded, exception, traceback, output
+        self.__time = chrono.get()
+        self.__failed = not data["hasSucceeded"]
+        self.__error = data["exception"] is not None
+        self.__traceback = data["traceback"]
+        self.__output = data["output"]
         
-    def setError(self, message : str):
-        self.__error = True
-        self.__message = message
+        if self.__parent is not None:
+            self.__parent.update()
+
         
-    def setSkipped(self, message : str):
+    def skip(self, message : str):
         self.__skipped = True
         self.__message = message
         
@@ -46,130 +64,139 @@ class Test:
     def message(self):
         return self.__message
     
+    @property
+    def traceback(self):
+        return self.__traceback
+    
+    @property
+    def output(self):
+        return self.__output
+    
+    def __str__(self):
+        return f"{self.name} - {self.time} seconds - {'Failed' if self.failed else 'Succeeded'} - {'Error' if self.error else 'No error'} - {'Skipped' if self.skipped else 'Not skipped'}"
+    
+    
 
-class Suite:
-    def __init__(self, file : str, name : str = None):
-        self.__name = name if name is not None else file
-        self.__timestamp = datetime.datetime.now() # Date and time of when the test run was executed
-        self.__childs = []
-        self.__tests = 0
-        self.__failures = 0
-        self.__errors = 0
-        self.__skipped = 0
-        self.__time = 0.0
-        self.__file = file
+TESTLIST = None
+
+class TestList:
+    def __init__(self, name : str, parent : Union['TestList', 'Suite'] = None):
+        self._timestamp = datetime.datetime.now() # Date and time of when the test run was executed
+        self._name = name
+        self._tests = 0
+        self._failures = 0
+        self._errors = 0
+        self._skipped = 0
+        self._time = 0.0
+        self._childs = {} #type: Dict[str, Union[Test, Suite]]
+        self._parent = parent
+        
+    def hasChild(self, name : str):
+        return name in self._childs
+    
+    def getChild(self, name : str):
+        return self._childs[name]
         
     def addTest(self, test : Test):
-        self.__childs.append(test)
-        self.__tests += 1
-        self.__failures += 1 if test.failed else 0
-        self.__errors += 1 if test.error else 0
-        self.__skipped += 1 if test.skipped else 0
-        self.__time += test.time
+        self._childs[test.name] = test
+        self._tests += 1
+        self._failures += 1 if test.failed else 0
+        self._errors += 1 if test.error else 0
+        self._skipped += 1 if test.skipped else 0
+        self._time += test.time
         
     def addSuite(self, suite: 'Suite'):
-        self.__childs.append(suite)
-        self.__tests += suite.tests
-        self.__failures += suite.failures
-        self.__errors += suite.errors
-        self.__skipped += suite.skipped
-        self.__time += suite.time
+        self._childs[suite.name] = suite
+        self._tests += suite.tests
+        self._failures += suite.failures
+        self._errors += suite.errors
+        self._skipped += suite.skipped
+        self._time += suite.time
         
+    def run(self):
+        for child in self._childs.values():
+            child.run()
+    
+    def update(self):
+        self._tests = 0
+        self._failures = 0
+        self._errors = 0
+        self._skipped = 0
+        self._time = 0.0
+        for child in self._childs.values():
+            if isinstance(child, Test):
+                self._tests += 1
+                self._failures += 1 if child.failed else 0
+                self._errors += 1 if child.error else 0
+                self._skipped += 1 if child.skipped else 0
+                self._time += child.time
+            else:
+                self._tests += child.tests
+                self._failures += child.failures
+                self._errors += child.errors
+                self._skipped += child.skipped
+                self._time += child.time
+        
+        if self._parent is not None:
+            self._parent.update()
+        
+    @property
+    def timestamp(self):
+        return self._timestamp
+    
     @property
     def name(self):
-        return self.__name
-    
-    @property
-    def timestamp(self):
-        return self.__timestamp
+        return self._name
     
     @property
     def tests(self):
-        return self.__tests
+        return self._tests
     
     @property
     def failures(self):
-        return self.__failures
+        return self._failures
     
     @property
     def errors(self):
-        return self.__errors
+        return self._errors
     
     @property
     def skipped(self):
-        return self.__skipped
+        return self._skipped
     
     @property
     def time(self):
-        return self.__time
+        return self._time
     
+    @property
+    def childs(self):
+        return self._childs        
+
+    @staticmethod
+    def getInstance():
+        global TESTLIST
+        if TESTLIST is None:
+            raise Exception("TestList instance not created")
+        return TESTLIST
+    
+    @staticmethod
+    def new(name : str):
+        global TESTLIST
+        TESTLIST = TestList(name)
+        return TESTLIST
+    
+    def __str__(self):
+        return "TestList : " + self.name + "\n" + "\n".join([str(child) for child in self.childs.values()])
+
+
+class Suite(TestList):
+    def __init__(self, file : str, name : str = None, parent : Union['TestList', 'Suite'] = None):
+        super().__init__(name if name is not None else file, parent)
+        self._file = file
+        
     @property
     def file(self):
-        return self.__file
+        return self._file
     
-    @property
-    def childs(self):
-        return self.__childs
-    
-
-
-
-class TestResults:
-    def __init__(self, test_name):
-        self.__timestamp = datetime.datetime.now() # Date and time of when the test run was executed
-        self.__test_name = test_name
-        self.__tests = 0
-        self.__failures = 0
-        self.__errors = 0
-        self.__skipped = 0
-        self.__time = 0.0
-        self.__childs = []
-        
-    def addTest(self, test : Test):
-        self.__childs.append(test)
-        self.__tests += 1
-        self.__failures += 1 if test.failed else 0
-        self.__errors += 1 if test.error else 0
-        self.__skipped += 1 if test.skipped else 0
-        self.__time += test.time
-        
-    def addSuite(self, suite: Suite):
-        self.__childs.append(suite)
-        self.__tests += suite.tests
-        self.__failures += suite.failures
-        self.__errors += suite.errors
-        self.__skipped += suite.skipped
-        self.__time += suite.time
-        
-    @property
-    def timestamp(self):
-        return self.__timestamp
-    
-    @property
-    def test_name(self):
-        return self.__test_name
-    
-    @property
-    def tests(self):
-        return self.__tests
-    
-    @property
-    def failures(self):
-        return self.__failures
-    
-    @property
-    def errors(self):
-        return self.__errors
-    
-    @property
-    def skipped(self):
-        return self.__skipped
-    
-    @property
-    def time(self):
-        return self.__time
-    
-    @property
-    def childs(self):
-        return self.__childs        
-    
+    def __str__(self):
+        return f"Suite {self.name} ({self.file}) : {self.tests} tests, {self.failures} failures, {self.errors} errors, {self.skipped} skipped, {self.time} seconds"

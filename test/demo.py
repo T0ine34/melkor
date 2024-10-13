@@ -1,4 +1,4 @@
-from tester import UnitTest, IntegrationTest
+from tester import UnitTest
 
 
 
@@ -14,7 +14,7 @@ def test2():
     willRaiseException()
 
 
-@IntegrationTest()
+@UnitTest()
 def test3():
     print("Hello World!")
     return 1

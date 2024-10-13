@@ -1,24 +1,36 @@
 from gamuLogger import Logger
 from enum import Enum
+import inspect
+import os
 
 try:
-    from .utils import CapturePrint, formatTraceback
+	from .utils import CapturePrint, formatTraceback
+	from .customTypes import TestList, Test, Suite
+	from .settings import Settings
 except ImportError:
-    from utils import CapturePrint, formatTraceback
+	from utils import CapturePrint, formatTraceback
+	from customTypes import TestList, Test, Suite
+	from settings import Settings
 
 Logger.setModule("melkor")
 
-
-class Tests:
-	UNIT = []
-	INTEGRATION = []
-	END_TO_END = []
- 
+Settings.setFilePath("config.json")
  
 class _testclassdecoratorBase:
 	def __init__(self, func):
 		self.__func = func
 		self.__call__.__annotations__["name"] = func.__name__
+  
+		filepath = os.path.relpath(inspect.getfile(func), Settings().get("testDir"))
+		suiteHierarchy = filepath.replace(".py", "").split(os.sep)
+		crtSuite = TestList.getInstance()
+		for suiteName in suiteHierarchy:
+			if not crtSuite.hasChild(suiteName):
+				Logger.debug(f"Creating suite {suiteName}")
+				crtSuite.addSuite(Suite(filepath, suiteName, crtSuite))
+			crtSuite = crtSuite.getChild(suiteName)
+		crtSuite.addTest(Test(self.__call__, crtSuite))
+  
 		Logger.debug(f"Registered test {self.__func.__name__}")
   
 	def __call__(self, *args, **kwargs):
@@ -44,7 +56,6 @@ class _testclassdecoratorBase:
 			exitData["exception"] = Exception(f"Test returned {result}")
 	
 		exitData["output"] = capture.get()
-	
 		return exitData
 
 
@@ -52,7 +63,7 @@ def UnitTest(allowedToFail=False):
 	class _unittestclassdecorator(_testclassdecoratorBase):
 		def __init__(self, func):
 			super().__init__(func)
-			Tests.UNIT.append(self.__call__)
+			TestList.getInstance().addTest(Test(self.__call__))
 			
 		def __call__(self, *args, **kwargs):
 			data = super().__call__(*args, **kwargs)
@@ -61,36 +72,3 @@ def UnitTest(allowedToFail=False):
 			return data
 
 	return _unittestclassdecorator
-
-
-def IntegrationTest(allowedToFail=False):
-	class _integrationtestclassdecorator(_testclassdecoratorBase):
-		def __init__(self, func):
-			super().__init__(func)
-			Tests.INTEGRATION.append(self.__call__)
-			
-		def __call__(self, *args, **kwargs):
-			data = super().__call__(*args, **kwargs)
-			data["allowedToFail"] = allowedToFail
-
-			return data
-
-	return _integrationtestclassdecorator
-
-
-def EndToEndTest(allowedToFail=False):
-	class _endtoendtestclassdecorator(_testclassdecoratorBase):
-		def __init__(self, func):
-			super().__init__(func)
-			Tests.END_TO_END.append(self.__call__)
-			
-		def __call__(self, *args, **kwargs):
-			data = super().__call__(*args, **kwargs)
-			data["allowedToFail"] = allowedToFail
-
-			return data
-
-	return _endtoendtestclassdecorator
-    
-
-

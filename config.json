@@ -1,6 +1,4 @@
 {
-    "files": [
-        "src/demo.py",
-        "src/demo2.py"
-    ]
+    "name": "demo",
+    "testDir": "test"
 }
