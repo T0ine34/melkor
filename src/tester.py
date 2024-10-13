@@ -2,9 +2,9 @@ from gamuLogger import Logger
 from enum import Enum
 
 try:
-    from .utils import CapturePrint
+    from .utils import CapturePrint, formatTraceback
 except ImportError:
-    from utils import CapturePrint
+    from utils import CapturePrint, formatTraceback
 
 Logger.setModule("melkor")
 
@@ -26,7 +26,8 @@ class _testclassdecoratorBase:
    
 		exitData = {
 			"hasSucceeded": True,
-			"exception": None
+			"exception": None,
+			"traceback": None,
 		}
 		result = None
 		try:
@@ -36,12 +37,12 @@ class _testclassdecoratorBase:
 		except Exception as e:
 			exitData["exception"] = e
 			exitData["hasSucceeded"] = False
+			exitData["traceback"] = formatTraceback(e)
 
 		if type(result) == int and result != 0:
 			exitData["hasSucceeded"] = False
 			exitData["exception"] = Exception(f"Test returned {result}")
 	
-			
 		exitData["output"] = capture.get()
 	
 		return exitData

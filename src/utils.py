@@ -1,5 +1,5 @@
-from typing import Callable
 import builtins
+import traceback
 
 
 class CapturePrint:
@@ -18,3 +18,10 @@ class CapturePrint:
         
     def get(self):
         return self.__stdout
+    
+    
+def formatTraceback(exception: Exception) -> str:
+    """Format the traceback of an exception, removing the first element"""
+    trace =  traceback.TracebackException.from_exception(exception)
+    trace.stack.pop(0)
+    return "    ".join(trace.format())

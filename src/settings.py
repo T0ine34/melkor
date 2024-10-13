@@ -39,6 +39,16 @@ class Settings:
     def __getitem__(self, key : str):
         return self.get(key)
     
+    def __contains__(self, key : str):
+        try:
+            self.get(key)
+            return True
+        except KeyError:
+            return False
+        
+    def has(self, key : str):
+        return key in self
+    
     @staticmethod
     def setFilePath(path : str):
         Settings.__configFile = path
