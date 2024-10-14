@@ -4,8 +4,8 @@ import os
 
 from gamuLogger import Logger
 
-from customTypes import TestList
-from settings import Settings
+from .customTypes import TestList
+from .settings import Settings
 
 
 Logger.setModule("melkor")

@@ -7,7 +7,7 @@ from gamuLogger import Logger
 Logger.setModule("melkor")
 
 
-from customTypes import Suite, Test, TestList
+from ..customTypes import Suite, Test, TestList
 
 
 def formatDate(date: datetime) -> str:

@@ -7,10 +7,10 @@ import traceback
 
 from gamuLogger import Logger, LEVELS
 
-from settings import Settings
-from engine import importFiles
-from customTypes import TestList
-from output.junit import Report as JunitReport
+from .settings import Settings
+from .engine import importFiles
+from .customTypes import TestList
+from .output.junit import Report as JunitReport
 
 Logger.setModule("melkor")
 
