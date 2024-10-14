@@ -1,10 +1,7 @@
 import datetime
 from typing import Callable, Dict, Any, Union
 
-try:
-    from .utils import Chrono
-except ImportError:
-    from utils import Chrono
+from .utils import Chrono
 
 
 class Test:
@@ -25,15 +22,22 @@ class Test:
             return # Do not run the test if it was marked as skipped
         chrono = Chrono()
         with chrono:
-            data = self.__func() # contains keys: hasSucceeded, exception, traceback, output
+            data = self.__func() # contains keys: error, failed, exception, traceback, output
         self.__time = chrono.get()
-        self.__failed = not data["hasSucceeded"]
-        self.__error = data["exception"] is not None
+        self.__failed = data['failed']
+        self.__error = data['error']
+        self.__exceptionType = data["exception"].__class__.__name__ if data["exception"] is not None else ""
+        self.__message = data["exception"].__str__() if data["exception"] is not None else ""
         self.__traceback = data["traceback"]
         self.__output = data["output"]
         
         if self.__parent is not None:
             self.__parent.update()
+            
+    def completeName(self):
+        if self.__parent is None:
+            return self.__name
+        return self.__parent.completeName() + "." + self.__name
 
         
     def skip(self, message : str):
@@ -71,6 +75,14 @@ class Test:
     @property
     def output(self):
         return self.__output
+    
+    @property
+    def exceptionType(self):
+        return self.__exceptionType
+    
+    @property
+    def doc(self):
+        return self.__func.__doc__
     
     def __str__(self):
         return f"{self.name} - {self.time} seconds - {'Failed' if self.failed else 'Succeeded'} - {'Error' if self.error else 'No error'} - {'Skipped' if self.skipped else 'Not skipped'}"
@@ -139,6 +151,11 @@ class TestList:
         
         if self._parent is not None:
             self._parent.update()
+            
+    def completeName(self):
+        if self._parent is None:
+            return self._name
+        return self._parent.completeName() + "." + self._name
         
     @property
     def timestamp(self):
@@ -187,6 +204,15 @@ class TestList:
     
     def __str__(self):
         return "TestList : " + self.name + "\n" + "\n".join([str(child) for child in self.childs.values()])
+    
+    def getHierarchy(self) -> Dict[str, Union[Dict, str]]: # Returns a dictionary with the hierarchy of it's children
+        result = {}
+        for child in self.childs.values():
+            if isinstance(child, Test):
+                result[child.name] = child.name
+            else:
+                result[child.name] = child.getHierarchy()
+        return result
 
 
 class Suite(TestList):
@@ -200,3 +226,7 @@ class Suite(TestList):
     
     def __str__(self):
         return f"Suite {self.name} ({self.file}) : {self.tests} tests, {self.failures} failures, {self.errors} errors, {self.skipped} skipped, {self.time} seconds"
+
+
+class ReturnCodeError(Exception):
+    pass

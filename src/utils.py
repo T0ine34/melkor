@@ -5,7 +5,7 @@ import time
 
 class CapturePrint:
     def __init__(self):
-        self.__stdout = []
+        self.__stdout = [] #type: list[str]
         
     def __enter__(self):
         self.__buildinPrint = builtins.print
@@ -17,7 +17,7 @@ class CapturePrint:
     def __print(self, *args, **kwargs):
         self.__stdout.append(" ".join(args))
         
-    def get(self):
+    def get(self) -> list[str]:
         return self.__stdout
     
     

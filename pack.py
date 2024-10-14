@@ -4,7 +4,6 @@ class Builder(BaseBuilder):
     def Setup(self):
         self.addDirectory('src', 'src/melkor')
         self.addAndReplaceByPackageVersion('pyproject.toml')
-        self.addAndReplaceByPackageVersion('src/version.py', 'src/melkor/version.py')
         self.addFile('readme.md')
         self.venv().install('build')
         

@@ -1,15 +1,12 @@
 import importlib.util
-from typing import List, Callable, Dict
+from typing import List, Callable
 import os
 
 from gamuLogger import Logger
 
-try:
-    from .customTypes import Suite, Test, TestList
-    from .settings import Settings
-except ImportError:
-    from customTypes import Suite, Test, TestList
-    from settings import Settings
+from .customTypes import TestList
+from .settings import Settings
+
 
 Logger.setModule("melkor")
 
@@ -34,7 +31,7 @@ def runTests(testList : List[Callable[[], int]]) -> TestList:
     
     for test in testList:
         data = test()
-        if not data["hasSucceeded"]:
+        if data["hasSucceeded"]:
             result['failedTests'] += 1
             string = f"Test {test.__annotations__['name']} failed"
             if data["exception"]:

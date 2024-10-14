@@ -1,21 +1,23 @@
 import argparse
 import sys
 import os
+import importlib.metadata as metadata
+import traceback
 
 
 from gamuLogger import Logger, LEVELS
 
-try:
-    from .settings import Settings
-    from .engine import importFiles, runTests
-    from .customTypes import TestList, Test, Suite
-except ImportError:
-    from settings import Settings
-    from engine import importFiles, runTests
-    from customTypes import TestList, Test, Suite
-    
+from .settings import Settings
+from .engine import importFiles
+from .customTypes import TestList
+from .output.junit import Report as JunitReport
 
 Logger.setModule("melkor")
+
+def logPackageVersion():
+    Logger.debug(f"Python version: {sys.version}")
+    Logger.debug(f"gamuLogger version: {metadata.version('gamuLogger')}")
+    Logger.debug(f"melkor version: {metadata.version('melkor')}")
 
 
 def main():
@@ -26,6 +28,8 @@ def main():
     
     if args.debug:
         Logger.setLevel('stdout', LEVELS.DEBUG)
+        
+    logPackageVersion()
     
     Settings.setFilePath(args.configFile)
         
@@ -37,14 +41,21 @@ def main():
     TestList.new(Settings().get("name"))
 
     files = [os.path.join(testDir, file) for file in os.listdir(testDir) if file.endswith(".py")]
+    Logger.info(f"Found {len(files)} test files, loading them")
     modules = importFiles(files)
     
+    Logger.info("Running tests")
     TestList.getInstance().run()
-    Logger.info(str(TestList.getInstance()))
-        
+    
+    Logger.info("Generating JUnit report")
+    junitReport = JunitReport(TestList.getInstance())
+    junitReport.save(Settings().get("outFile"))
+    Logger.info(f"Report generated to {Settings().get('outFile')}")
+
 
 if __name__ == "__main__":
     try:
         main()
     except Exception as e:
+        Logger.debug(traceback.format_exc())
         Logger.critical(f"An exception occurred: {e}")
