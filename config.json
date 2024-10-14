@@ -1,5 +1,6 @@
 {
     "name": "demo",
     "testDir": "test",
+    "sourceDir": "src",
     "outFile": "test.xml"
 }

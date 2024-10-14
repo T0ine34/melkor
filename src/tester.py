@@ -2,9 +2,9 @@ from gamuLogger import Logger
 import inspect
 import os
 
-from .utils import CapturePrint, formatTraceback
-from .customTypes import TestList, Test, Suite, ReturnCodeError
-from .settings import Settings
+from utils import CapturePrint, formatTraceback
+from customTypes import TestList, Test, Suite, ReturnCodeError
+from settings import Settings
 
 
 Logger.setModule("melkor")

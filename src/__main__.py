@@ -7,10 +7,10 @@ import traceback
 
 from gamuLogger import Logger, LEVELS
 
-from .settings import Settings
-from .engine import importFiles
-from .customTypes import TestList
-from .output.junit import Report as JunitReport
+from settings import Settings
+from engine import importFiles
+from customTypes import TestList
+from output.junit import Report as JunitReport
 
 Logger.setModule("melkor")
 
@@ -18,6 +18,12 @@ def logPackageVersion():
     Logger.debug(f"Python version: {sys.version}")
     Logger.debug(f"gamuLogger version: {metadata.version('gamuLogger')}")
     Logger.debug(f"melkor version: {metadata.version('melkor')}")
+    
+
+def addSourcePath(sourceDir : str):
+    sourceDir = os.path.abspath(sourceDir)
+    sys.path.append(sourceDir)
+    Logger.debug(f"Added '{sourceDir}' to the source path")
 
 
 def main():
@@ -37,6 +43,13 @@ def main():
     if not os.path.exists(testDir):
         Logger.error(f"Test directory '{testDir}' not found")
         sys.exit(1)
+        
+    sourceDir = Settings().get("sourceDir")
+    if not os.path.exists(sourceDir):
+        Logger.error(f"Source directory '{sourceDir}' not found")
+        sys.exit(1)
+        
+    addSourcePath(sourceDir)
 
     TestList.new(Settings().get("name"))
 

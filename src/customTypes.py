@@ -1,7 +1,7 @@
 import datetime
 from typing import Callable, Dict, Any, Union
 
-from .utils import Chrono
+from utils import Chrono
 
 
 class Test:

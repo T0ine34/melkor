@@ -1,1 +1,1 @@
-from .tester import UnitTest
+from tester import UnitTest

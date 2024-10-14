@@ -1,6 +1,6 @@
 from melkor import UnitTest
 
-
+from engine import importFiles
 
 def willRaiseException():
     raise Exception("This is an exception")
