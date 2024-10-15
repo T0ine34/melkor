@@ -48,14 +48,16 @@ def run(configFilePath : str):
     importFiles(files)
     
     Logger.info("Running tests")
-    TestList.getInstance().run()
+    hasfailed = TestList.getInstance().run()
     
     Logger.info("Generating JUnit report")
     junitReport = JunitReport(TestList.getInstance())
     junitReport.save(Settings().get("outFile"))
     Logger.info(f"Report generated to {Settings().get('outFile')}")
     
-    
+    if hasfailed:
+        return 1
+    return 0
 
 def main():
     parser = argparse.ArgumentParser()
@@ -70,12 +72,13 @@ def main():
     Logger.debug(f"Python version: {sys.version}")
     Logger.debug(f"gamuLogger version: {metadata.version('gamuLogger')}")
     
-    run(args.configFile)
+    return run(args.configFile)
 
 
 if __name__ == "__main__":
     try:
-        main()
+        exit(main())
     except Exception as e:
         Logger.debug(traceback.format_exc())
         Logger.critical(f"An exception occurred: {e}")
+        exit(1)

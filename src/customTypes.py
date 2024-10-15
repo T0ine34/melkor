@@ -17,9 +17,9 @@ class Test:
         self.__output = None
         self.__parent = parent
         
-    def run(self):
+    def run(self) -> bool:
         if self.__skipped:
-            return # Do not run the test if it was marked as skipped
+            return False# Do not run the test if it was marked as skipped
         chrono = Chrono()
         with chrono:
             data = self.__func() # contains keys: error, failed, exception, traceback, output
@@ -33,6 +33,8 @@ class Test:
         
         if self.__parent is not None:
             self.__parent.update()
+        
+        return self.__failed or self.__error
             
     def completeName(self):
         if self.__parent is None:
@@ -125,9 +127,11 @@ class TestList:
         self._skipped += suite.skipped
         self._time += suite.time
         
-    def run(self):
+    def run(self) -> bool:
+        failed = False
         for child in self._childs.values():
-            child.run()
+            failed = failed or child.run()
+        return failed
     
     def update(self):
         self._tests = 0
