@@ -13,11 +13,6 @@ from .customTypes import TestList
 from .output.junit import Report as JunitReport
 
 Logger.setModule("melkor")
-
-def logPackageVersion():
-    Logger.debug(f"Python version: {sys.version}")
-    Logger.debug(f"gamuLogger version: {metadata.version('gamuLogger')}")
-    Logger.debug(f"melkor version: {metadata.version('melkor')}")
     
 
 def addSourcePath(sourceDir : str):
@@ -26,18 +21,13 @@ def addSourcePath(sourceDir : str):
     Logger.debug(f"Added '{sourceDir}' to the source path")
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("configFile", help="Path to the configuration file")
-    parser.add_argument("--debug", help="Enable debug mode", action="store_true")
-    args = parser.parse_args()
     
-    if args.debug:
-        Logger.setLevel('stdout', LEVELS.DEBUG)
-        
-    logPackageVersion()
     
-    Settings.setFilePath(args.configFile)
+def run(configFilePath : str):
+    
+    Logger.debug(f"melkor version: {metadata.version('melkor')}")
+    
+    Settings.setFilePath(configFilePath)
         
     testDir = Settings().get("testDir")
     if not os.path.exists(testDir):
@@ -55,7 +45,7 @@ def main():
 
     files = [os.path.join(testDir, file) for file in os.listdir(testDir) if file.endswith(".py")]
     Logger.info(f"Found {len(files)} test files, loading them")
-    modules = importFiles(files)
+    importFiles(files)
     
     Logger.info("Running tests")
     TestList.getInstance().run()
@@ -64,6 +54,23 @@ def main():
     junitReport = JunitReport(TestList.getInstance())
     junitReport.save(Settings().get("outFile"))
     Logger.info(f"Report generated to {Settings().get('outFile')}")
+    
+    
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("configFile", help="Path to the configuration file")
+    parser.add_argument("--debug", help="Enable debug mode", action="store_true")
+    args = parser.parse_args()
+    
+    if args.debug:
+        Logger.setLevel('stdout', LEVELS.DEBUG)
+        
+    
+    Logger.debug(f"Python version: {sys.version}")
+    Logger.debug(f"gamuLogger version: {metadata.version('gamuLogger')}")
+    
+    run(args.configFile)
 
 
 if __name__ == "__main__":
