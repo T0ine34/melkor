@@ -15,7 +15,7 @@ class CapturePrint:
         builtins.print = self.__buildinPrint
         
     def __print(self, *args, **kwargs):
-        self.__stdout.append(" ".join(args))
+        self.__stdout.append(" ".join(str(args)))
         
     def get(self) -> list[str]:
         return self.__stdout
