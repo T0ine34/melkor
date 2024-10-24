@@ -1,2 +1,3 @@
-feanor==1.0.8
+feanor==1.2.0
+feanorTempDir==1.0.0
 gamuLogger==2.0.6
