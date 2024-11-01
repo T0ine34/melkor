@@ -18,7 +18,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "gamuLogger==2.0.6",
+    "gamuLogger>=2.0.6",
     "json5>=0.9.25"
 ]
 
