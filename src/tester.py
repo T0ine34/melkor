@@ -7,7 +7,7 @@ from .customTypes import TestList, Test, Suite, ReturnCodeError
 from .settings import Settings
 
 
-Logger.setModule("melkor")
+Logger.setModule("melkor.tester")
 
 Settings.setFilePath("config.json")
 

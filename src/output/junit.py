@@ -4,7 +4,7 @@ from datetime import datetime
 
 from gamuLogger import Logger
 
-Logger.setModule("melkor")
+Logger.setModule("melkor.junit")
 
 
 from ..customTypes import Suite, Test, TestList

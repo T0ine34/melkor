@@ -8,7 +8,7 @@ from .customTypes import TestList
 from .settings import Settings
 
 
-Logger.setModule("melkor")
+Logger.setModule("melkor.engine")
 
 def importFile(file) -> object:
     spec = importlib.util.spec_from_file_location("module.name", file)
